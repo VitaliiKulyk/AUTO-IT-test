@@ -1,6 +1,6 @@
 import axios from "axios";
-import fs from "fs";
 import { openAsBlob } from "node:fs";
+import util from "util";
 
 (async () => {
   const file = await openAsBlob("./invoiceFile.xlsx");
@@ -9,7 +9,7 @@ import { openAsBlob } from "node:fs";
 
   const request_config = {
     method: "post",
-    url: "http://127.0.0.1:3006/invoice/process",
+    url: "http://127.0.0.1:3006/invoice/process-file",
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -20,7 +20,7 @@ import { openAsBlob } from "node:fs";
   };
 
   const response = await axios(request_config);
-  console.log(response.data);
+  console.log(util.inspect(response.data, { showHidden: false, depth: null, colors: true }));
 
   console.log("ok");
   process.exit();

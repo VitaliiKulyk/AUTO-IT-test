@@ -1,11 +1,10 @@
 import express from "express";
-
 import fileUpload from "express-fileupload";
 import fs from "fs/promises";
 
-import { processFile } from "./process";
+import { parseInvoiceFile } from "./invoices/invoiceParser";
 import { Invoice } from "./invoices/invoice";
-import { isEmpty } from "lodash";
+import { getInvoiceTotal, isInvoiceValid } from "./invoices/helper";
 
 const app = express();
 app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tmp/" }));
@@ -14,27 +13,27 @@ app.get("/test", (req, res) => {
   res.send("GET. Test endpoint. OK.");
 });
 
-app.post("/invoice/process", async (req: any, res) => {
+app.post("/invoice/process-file", async (req: any, res) => {
   const { invoicingMonth } = req.query;
   const file = await fs.readFile(req.files.file.tempFilePath);
-  const { invoices, month, currencyRates } = processFile(file);
+  const { invoices, month, currencyRates } = parseInvoiceFile(file);
 
   if (!invoicingMonth === month) {
     return res.status(400).send("Invoicing month does not match with file");
   }
 
-  const isInvoiceValid = (invoice: Invoice) => {
-    const hasErrors = !isEmpty(invoice.validationErrors);
-    const valid = invoice.status === "Ready" || !isEmpty(invoice.invoiceNumber);
-    return !hasErrors && valid;
-  };
+  /// якщо інвойс не валідний, він далі не процеситься, проте повертаються в респонсі з помилками
+  const validInvoices: Invoice[] = invoices.filter(isInvoiceValid);
 
-  const validInvoices = invoices.filter(isInvoiceValid);
+  validInvoices.forEach((invoice) => {
+    const invoiceTotal = getInvoiceTotal(invoice, currencyRates);
+    invoice.invoiceTotal = invoiceTotal;
+  });
 
   res.send({
     invoicingMonth,
     currencyRates,
-    invoicesData: validInvoices,
+    invoicesData: invoices, //тут невалідні інвойси з помилками валідації, та валідні інвойси з тоталом
   });
 });
 

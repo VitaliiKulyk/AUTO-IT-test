@@ -13,4 +13,5 @@ export type Invoice = {
   contractComments?: string;
   //
   validationErrors?: any;
+  invoiceTotal?: number;
 };

@@ -1,7 +1,7 @@
 import validate from "validate.js";
 
-import { ParsingOptions } from "./parsingOptions";
-import { Invoice } from "./invoice";
+import { ParsingOptions } from "../invoices/parsingOptions";
+import { Invoice } from "../invoices/invoice";
 
 type ValidateAndParseOptions = {
   validationConstraints: Record<string, object>;
